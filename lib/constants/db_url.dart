@@ -1,0 +1,1 @@
+const db_url = 'https://fortest-x.firebaseio.com/';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:myshop/providers/products.dart';
 import 'package:provider/provider.dart';
+import '../providers/products.dart';
+import '../widgets/spinner.dart';
 
 class EditProductScreen extends StatefulWidget {
   static const routeName = '/edit-product';
@@ -26,13 +27,13 @@ class _EditProductScreenState extends State<EditProductScreen> {
   void dispose() {
     _priceFocusNode.dispose();
     _descFocusNode.dispose();
-    _imageUrlFocusNode.removeListener((){});
+    _imageUrlFocusNode.removeListener(() {});
     _imageUrlFocusNode.dispose();
     super.dispose();
   }
 
-  void _updateImageUrl(){
-    if(!_imageUrlFocusNode.hasFocus){
+  void _updateImageUrl() {
+    if (!_imageUrlFocusNode.hasFocus) {
       setState(() {});
     }
   }
@@ -64,12 +65,40 @@ class _EditProductScreenState extends State<EditProductScreen> {
     super.didChangeDependencies();
   }
 
+  bool _isSpinner = false;
   void _onSubmit() {
     bool isValid = _form.currentState.validate();
     if (!isValid) return;
+    setState(() => _isSpinner = true);
     _form.currentState.save();
-    isEditMode ? productData.updateProduct(editProduct) : productData.addProduct(editProduct);
+    isEditMode
+        ? productData.updateProduct(editProduct)
+        : productData
+            .addProduct(editProduct)
+            .then(_afterStoredProduct)
+            .catchError(_onError);
+  }
+
+  void _afterStoredProduct(_) {
+    setState(() => _isSpinner = false);
     Navigator.of(context).pop();
+  }
+
+  void _onError(err) {
+    setState(() => _isSpinner = false);
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Error'),
+        content: Text(err.toString()),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Okay'),
+            onPressed: () => Navigator.pop(context),
+          )
+        ],
+      ),
+    );
   }
 
   @override
@@ -83,122 +112,124 @@ class _EditProductScreenState extends State<EditProductScreen> {
           IconButton(icon: Icon(Icons.save), onPressed: _onSubmit)
         ],
       ),
-      body: Form(
-        key: _form,
-        child: Card(
-          margin: const EdgeInsets.all(8),
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            children: <Widget>[
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Title'),
-                onFieldSubmitted: (_) =>
-                    FocusScope.of(context).requestFocus(_priceFocusNode),
-                validator: (value) => value.trim().length < 3
-                    ? "Title must be at least 3 characters long"
-                    : null,
-                initialValue: editProduct.title,
-                onSaved: (value) {
-                  editProduct = Product(
-                    id: editProduct.id,
-                    title: value,
-                    price: editProduct.price,
-                    imageUrl: editProduct.imageUrl,
-                    description: editProduct.description,
-                  );
-                },
-              ),
-              TextFormField(
-                onFieldSubmitted: (_) =>
-                    FocusScope.of(context).requestFocus(_descFocusNode),
-                validator: (value) =>
-                    value.trim().length < 2 || double.tryParse(value) == null
-                        ? 'Price must be at least 10'
-                        : null,
-                onSaved: (value) {
-                  editProduct = Product(
-                    id: editProduct.id,
-                    title: editProduct.title,
-                    price: double.parse(value.trim()),
-                    imageUrl: editProduct.imageUrl,
-                    description: editProduct.description,
-                  );
-                },
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'Price'),
-                focusNode: _priceFocusNode,
-                initialValue: isEditMode ? editProduct.price.toString() : '',
-              ),
-              TextFormField(
-                validator: (value) => value.trim().length < 10
-                    ? "Description must be at least 10 characters long"
-                    : null,
-                onSaved: (value) {
-                  editProduct = Product(
-                    id: editProduct.id,
-                    title: editProduct.title,
-                    price: editProduct.price,
-                    imageUrl: editProduct.imageUrl,
-                    description: value,
-                  );
-                },
-                maxLines: 3,
-                focusNode: _descFocusNode,
-                initialValue: editProduct.description,
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(labelText: 'Description'),
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  Container(
-                    height: 100,
-                    width: 100,
-                    padding: const EdgeInsets.all(8),
-                    margin: const EdgeInsets.fromLTRB(0, 12, 12, 0),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).primaryColor),
+      body: _isSpinner
+          ? Spinner
+          : Form(
+              key: _form,
+              child: Card(
+                margin: const EdgeInsets.all(8),
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  children: <Widget>[
+                    TextFormField(
+                      decoration: InputDecoration(labelText: 'Title'),
+                      onFieldSubmitted: (_) =>
+                          FocusScope.of(context).requestFocus(_priceFocusNode),
+                      validator: (value) => value.trim().length < 3
+                          ? "Title must be at least 3 characters long"
+                          : null,
+                      initialValue: editProduct.title,
+                      onSaved: (value) {
+                        editProduct = Product(
+                          id: editProduct.id,
+                          title: value,
+                          price: editProduct.price,
+                          imageUrl: editProduct.imageUrl,
+                          description: editProduct.description,
+                        );
+                      },
                     ),
-                    child: _imageUrlController.text == ""
-                        ? Text('Enter Image URL')
-                        : Image.network(_imageUrlController.text,
-                            fit: BoxFit.cover),
-                  ),
-                  Expanded(
-                    child: TextFormField(
-
-                      decoration: InputDecoration(labelText: 'Image Url'),
-                      focusNode: _imageUrlFocusNode,
-                      controller: _imageUrlController,
-                      onFieldSubmitted: (_) => _onSubmit,
-                      
-                      onSaved: (value){
+                    TextFormField(
+                      onFieldSubmitted: (_) =>
+                          FocusScope.of(context).requestFocus(_descFocusNode),
+                      validator: (value) => value.trim().length < 2 ||
+                              double.tryParse(value) == null
+                          ? 'Price must be at least 10'
+                          : null,
+                      onSaved: (value) {
+                        editProduct = Product(
+                          id: editProduct.id,
+                          title: editProduct.title,
+                          price: double.parse(value.trim()),
+                          imageUrl: editProduct.imageUrl,
+                          description: editProduct.description,
+                        );
+                      },
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: 'Price'),
+                      focusNode: _priceFocusNode,
+                      initialValue:
+                          isEditMode ? editProduct.price.toString() : '',
+                    ),
+                    TextFormField(
+                      validator: (value) => value.trim().length < 10
+                          ? "Description must be at least 10 characters long"
+                          : null,
+                      onSaved: (value) {
                         editProduct = Product(
                           id: editProduct.id,
                           title: editProduct.title,
                           price: editProduct.price,
-                          description: editProduct.description,
-                          imageUrl: value,
+                          imageUrl: editProduct.imageUrl,
+                          description: value,
                         );
                       },
-                      validator: (value) {
-                        String urlPattern =
-                            r"(https?|ftp)://([-A-Z0-9.]+)(/[-A-Z0-9+&@#/%=~_|!:,.;]*)?(\?[A-Z0-9+&@#/%=~_|!:‌​,.;]*)?";
-                        final isValid =
-                            new RegExp(urlPattern, caseSensitive: false)
-                                .firstMatch(value);
-                        return isValid == null
-                            ? "Please provide a valid image url"
-                            : null;
-                      },
+                      maxLines: 3,
+                      focusNode: _descFocusNode,
+                      initialValue: editProduct.description,
+                      keyboardType: TextInputType.multiline,
+                      decoration: InputDecoration(labelText: 'Description'),
                     ),
-                  ),
-                ],
-              )
-            ],
-          ),
-        ),
-      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        Container(
+                          height: 100,
+                          width: 100,
+                          padding: const EdgeInsets.all(8),
+                          margin: const EdgeInsets.fromLTRB(0, 12, 12, 0),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                                color: Theme.of(context).primaryColor),
+                          ),
+                          child: _imageUrlController.text == ""
+                              ? Text('Enter Image URL')
+                              : Image.network(_imageUrlController.text,
+                                  fit: BoxFit.cover),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            decoration: InputDecoration(labelText: 'Image Url'),
+                            focusNode: _imageUrlFocusNode,
+                            controller: _imageUrlController,
+                            onFieldSubmitted: (_) => _onSubmit,
+                            onSaved: (value) {
+                              editProduct = Product(
+                                id: editProduct.id,
+                                title: editProduct.title,
+                                price: editProduct.price,
+                                description: editProduct.description,
+                                imageUrl: value,
+                              );
+                            },
+                            validator: (value) {
+                              String urlPattern =
+                                  r"(https?|ftp)://([-A-Z0-9.]+)(/[-A-Z0-9+&@#/%=~_|!:,.;]*)?(\?[A-Z0-9+&@#/%=~_|!:‌​,.;]*)?";
+                              final isValid =
+                                  new RegExp(urlPattern, caseSensitive: false)
+                                      .firstMatch(value);
+                              return isValid == null
+                                  ? "Please provide a valid image url"
+                                  : null;
+                            },
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ),
     );
   }
 }
