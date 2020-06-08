@@ -29,15 +29,22 @@ class Product with ChangeNotifier {
 
 class Products with ChangeNotifier {
   List<Product> _products = [];
-  
+
   List<Product> get products => [..._products];
 
   Product findById(String productId) =>
       _products.firstWhere((p) => p.id == productId);
 
-  void removerProduct(productId) {
+  Future<void> removerProduct(String productId) {
+    final deleteProductIndex = _products.indexWhere((p) => p.id == productId);
+    final Product product = _products[deleteProductIndex];
     _products.removeWhere((p) => p.id == productId);
     notifyListeners();
+
+    return http.delete("$_dburl/$productId").catchError((err) {
+      _products.insert(deleteProductIndex, product);
+      return throw (err);
+    });
   }
 
   String _productToJSON(Product product) => json.encode({
@@ -50,8 +57,7 @@ class Products with ChangeNotifier {
 
   Future<void> addProduct(Product product) {
     final productToJSON = _productToJSON(product);
-    return http.post("$_dburl.json", body: productToJSON)
-    .then((res) {
+    return http.post("$_dburl.json", body: productToJSON).then((res) {
       final String productId = json.decode(res.body)['name'];
       _products.add(Product(
         id: productId,
@@ -64,11 +70,35 @@ class Products with ChangeNotifier {
     });
   }
 
-  void updateProduct(Product product) {
+  Future<void> updateProduct(Product product) {
     int existingProductIndex = _products.indexWhere((p) => p.id == product.id);
-    if (existingProductIndex >= 0) {
+    return http
+        .put("$_dburl/${product.id}.json", body: _productToJSON(product))
+        .then((_) {
       _products[existingProductIndex] = product;
       notifyListeners();
-    }
+    });
+  }
+
+  Future<void> refreshProducts() {
+    return http.get("$_dburl.json").then((res) {
+      final prodsdata = json.decode(res.body) as Map<Object, dynamic>;
+      final List<Product> loadedProducts = [];
+      prodsdata.forEach((productId, value) {
+        loadedProducts.add(Product(
+            id: productId,
+            title: value['title'],
+            price: value['price'],
+            imageUrl: value['imageUrl'],
+            description: value['description']));
+      });
+      _products = loadedProducts;
+      notifyListeners();
+    });
+  }
+
+  Future<void> fetchAndSetProducts() {
+    if (_products.isEmpty) return refreshProducts();
+    return Future.delayed(Duration.zero);
   }
 }

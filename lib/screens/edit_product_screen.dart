@@ -72,7 +72,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
     setState(() => _isSpinner = true);
     _form.currentState.save();
     isEditMode
-        ? productData.updateProduct(editProduct)
+        ? productData
+            .updateProduct(editProduct)
+            .then(_afterStoredProduct)
+            .catchError(_onError)
         : productData
             .addProduct(editProduct)
             .then(_afterStoredProduct)
@@ -113,7 +116,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
         ],
       ),
       body: _isSpinner
-          ? Spinner
+          ? Spinner()
           : Form(
               key: _form,
               child: Card(

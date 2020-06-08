@@ -10,7 +10,16 @@ class UserProduct extends StatelessWidget {
   Widget build(BuildContext context) {
     void removeProduct() {
       Navigator.of(context).pop();
-      Provider.of<Products>(context, listen: false).removerProduct(_product.id);
+      Provider.of<Products>(context, listen: false).removerProduct(_product.id).catchError((err){
+        final sf = Scaffold.of(context);
+        sf.hideCurrentSnackBar();
+        sf.showSnackBar(
+          SnackBar(
+            content: Text('Something went wrong!'),
+            backgroundColor: Theme.of(context).errorColor,
+          )
+        );
+      });
     }
 
     void beforeRemoveProduct() {

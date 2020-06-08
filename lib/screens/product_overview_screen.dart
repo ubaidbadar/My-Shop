@@ -19,14 +19,23 @@ class ProductOverViewScreen extends StatefulWidget {
 
 class _ProductOverViewScreenState extends State<ProductOverViewScreen> {
   FavOptions _filter = FavOptions.ShowAll;
-
+  bool _init = true;
+  Products _products;
+  @override
+  void didChangeDependencies() {
+    if(_init){
+      _init = false;
+      _products = Provider.of<Products>(context);
+      _products.fetchAndSetProducts().catchError((_) => print('error occured'));
+    }
+    super.didChangeDependencies();
+  }
   @override
   Widget build(BuildContext context) {
-    final prodsdata = Provider.of<Products>(context);
     final cartlength = Provider.of<Cart>(context).length;
     final List<Product> products = _filter == FavOptions.Favorites
-        ? prodsdata.products.where((p) => p.isFavorite).toList()
-        : prodsdata.products;
+        ? _products.products.where((p) => p.isFavorite).toList()
+        : _products.products;
     return Scaffold(
       appBar: AppBar(
         title: Text('My Shop'),
