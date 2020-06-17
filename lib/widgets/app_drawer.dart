@@ -6,29 +6,32 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: Column(
-        children: <Widget>[
-          AppBar(title: Text('My Shop'), automaticallyImplyLeading: false,),
-          SizedBox(height: 28,),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 32),
-            leading: Icon(Icons.shop),
-            title: Text('Shop'),
-            onTap: () => Navigator.pushReplacementNamed(context, '/'),
-          ),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 32),
-            leading: Icon(Icons.payment),
-            title: Text('Orders'),
-            onTap: () => Navigator.pushReplacementNamed(context, OrdersScreen.routeName),
-          ),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 32),
-            leading: Icon(Icons.edit),
-            title: Text('Manage Products'),
-            onTap: () => Navigator.pushNamed(context, UserProductsScreen.routeName),
-          ),
-        ],
+      child: Container(
+        color: Colors.white,
+        child: Column(
+          children: <Widget>[
+            AppBar(title: Text('My Shop'), automaticallyImplyLeading: false,),
+            SizedBox(height: 28,),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 32),
+              leading: Icon(Icons.shop),
+              title: Text('Shop'),
+              onTap: () => Navigator.pushReplacementNamed(context, '/'),
+            ),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 32),
+              leading: Icon(Icons.payment),
+              title: Text('Orders'),
+              onTap: () => Navigator.pushReplacementNamed(context, OrdersScreen.routeName),
+            ),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 32),
+              leading: Icon(Icons.edit),
+              title: Text('Manage Products'),
+              onTap: () => Navigator.pushNamed(context, UserProductsScreen.routeName),
+            ),
+          ],
+        ),
       ),
     );
   }

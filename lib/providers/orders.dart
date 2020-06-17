@@ -20,7 +20,7 @@ class Order {
 }
 
 class Orders with ChangeNotifier {
-  final List<Order> _orders = [];
+  List<Order> _orders = [];
   List<Order> get orders => [..._orders];
 
   String _toJson(Order order) {
@@ -28,12 +28,12 @@ class Orders with ChangeNotifier {
       'price': order.price,
       'dateTime': order.dateTime.toIso8601String(),
       'products': order.cart
-          .map((ci) => json.encode({
+          .map((ci) => {
                 'title': ci.title,
                 'price': ci.price,
                 'quantity': ci.quantity,
                 'id': ci.id,
-              }))
+              })
           .toList(),
     });
   }
@@ -60,14 +60,30 @@ class Orders with ChangeNotifier {
     });
   }
 
-  Future<void> refreshOrders(){
-    return http.get('$_dburl.json').then((res){
-      print(json.decode(res.body));
+  Future<void> refreshOrders() {
+    return http.get('$_dburl.json').then((res) {
+      final extractedData = json.decode(res.body) as Map<String, dynamic>;
+      final List<Order> loadedOrders = [];
+      extractedData.forEach((key, value) {
+        loadedOrders.insert(0, Order(
+          id: key,
+          dateTime: DateTime.parse(value['dateTime']),
+          price: value['price'],
+          cart: (value['products'] as List<dynamic>).map((p) => CartItem(
+                id: p['id'],
+                title: p['title'],
+                price: p['price'],
+                quantity: p['quantity'],
+              )).toList(),
+        ));
+      });
+      _orders = loadedOrders;
+      notifyListeners();
     });
   }
 
-  Future<void> fetchAndSetOrders(){
-    if(_orders.length > 0){
+  Future<void> fetchAndSetOrders() {
+    if (_orders.length <= 0) {
       return refreshOrders();
     }
     return Future.delayed(Duration.zero);

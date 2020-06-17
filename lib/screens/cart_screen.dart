@@ -1,22 +1,14 @@
 import 'package:flutter/material.dart';
+import '../widgets/order_now.dart';
 import 'package:provider/provider.dart';
 import '../widgets/cart_item.dart';
-import '../providers/orders.dart';
 import '../providers/cart.dart' as ci;
-import './orders_screen.dart';
 
 class CartScreen extends StatelessWidget {
   static const routeName = '/cart';
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<ci.Cart>(context);
-    final addOrder = Provider.of<Orders>(context, listen: false).addOrder;
-    void addingOrder(){
-      addOrder(cart.cart, cart.totalPrice);
-      cart.clearCart();
-      Navigator.pop(context);
-      Navigator.pushReplacementNamed(context, OrdersScreen.routeName);
-    }
     return Scaffold(
       appBar: AppBar(
         title: Text('Your Cart'),
@@ -67,16 +59,7 @@ class CartScreen extends StatelessWidget {
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
-                          FlatButton(
-                            child: Text(
-                              'ORDER NOW',
-                              style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontSize: 16,
-                              ),
-                            ),
-                            onPressed: addingOrder,
-                          ),
+                          OrderNow(cart: cart.cart, totalPrice: cart.totalPrice, cleatCart: cart.clearCart,),
                         ],
                       ),
                     ),
