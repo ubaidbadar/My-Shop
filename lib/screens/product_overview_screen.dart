@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myshop/widgets/spinner.dart';
 import 'package:provider/provider.dart';
 import '../widgets/app_drawer.dart';
 import './cart_screen.dart';
@@ -21,15 +22,46 @@ class _ProductOverViewScreenState extends State<ProductOverViewScreen> {
   FavOptions _filter = FavOptions.ShowAll;
   bool _init = true;
   Products _products;
+  bool _spinner = false;
+  bool _showErr = false;
   @override
   void didChangeDependencies() {
-    if(_init){
+    if (_init) {
       _init = false;
-      _products = Provider.of<Products>(context);
-      _products.fetchAndSetProducts().catchError((_) => print('error occured'));
+      _spinner = true;
+      getProducts();
     }
     super.didChangeDependencies();
   }
+
+  void getProducts() {
+    if (!_spinner) {
+      setState(() => _spinner = true);
+    }
+    _products = Provider.of<Products>(context);
+    _products
+        .fetchAndSetProducts()
+        .then((_) => setState(() => _spinner = false))
+        .catchError((err) {
+      setState(() {
+        _spinner = false;
+      });
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Something went wrong'),
+          content: Text("$err"),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Okay'),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          ],
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartlength = Provider.of<Cart>(context).length;
@@ -66,20 +98,40 @@ class _ProductOverViewScreenState extends State<ProductOverViewScreen> {
         ],
       ),
       drawer: AppDrawer(),
-      body: GridView.builder(
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 200,
-          childAspectRatio: 16 / 15,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-        ),
-        itemBuilder: (_, i) => ChangeNotifierProvider.value(
-          value: products[i],
-          child: ProductItem(),
-        ),
-        itemCount: products.length,
-        padding: const EdgeInsets.all(8),
-      ),
+      body: !_showErr
+          ? (_spinner
+              ? Spinner()
+              : (products.length > 0
+                  ? GridView.builder(
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 200,
+                        childAspectRatio: 16 / 15,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                      ),
+                      itemBuilder: (_, i) => ChangeNotifierProvider.value(
+                        value: products[i],
+                        child: ProductItem(),
+                      ),
+                      itemCount: products.length,
+                      padding: const EdgeInsets.all(8),
+                    )
+                  : Center(
+                      child: Text(
+                        'Products not found!',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    )))
+          : Center(
+              child: Text(
+                'Something went wrong!',
+                style: TextStyle(
+                  color: Theme.of(context).errorColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+            ),
     );
   }
 }

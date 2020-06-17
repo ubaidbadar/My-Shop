@@ -10,7 +10,7 @@ class ProductItem extends StatelessWidget {
     final Product product = Provider.of<Product>(context, listen: false);
     final cart = Provider.of<Cart>(context, listen: false);
     final sf = Scaffold.of(context);
-
+    print(product.isFavorite);
     void removeProductFromCart(){
       cart.removeSingleCartItem(product.id);
       sf.hideCurrentSnackBar();

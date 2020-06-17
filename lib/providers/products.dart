@@ -21,9 +21,14 @@ class Product with ChangeNotifier {
     this.isFavorite = false,
   });
 
-  void toggleFavoriteStatus() {
+  Future<void> toggleFavoriteStatus() {
     isFavorite = !isFavorite;
-    notifyListeners();
+    final option = json.encode({
+      'isFavorite': isFavorite,
+    });
+    return http
+        .patch("$_dburl/$id.json", body: option)
+        .then((_) => notifyListeners());
   }
 }
 
@@ -41,7 +46,7 @@ class Products with ChangeNotifier {
     _products.removeWhere((p) => p.id == productId);
     notifyListeners();
 
-    return http.delete("$_dburl/$productId").catchError((err) {
+    return http.delete("$_dburl/$productId.json").catchError((err) {
       _products.insert(deleteProductIndex, product);
       return throw (err);
     });
@@ -84,15 +89,19 @@ class Products with ChangeNotifier {
     return http.get("$_dburl.json").then((res) {
       final prodsdata = json.decode(res.body) as Map<Object, dynamic>;
       final List<Product> loadedProducts = [];
-      prodsdata.forEach((productId, value) {
-        loadedProducts.add(Product(
+      if (prodsdata != null) {
+        prodsdata.forEach((productId, value) {
+          loadedProducts.add(Product(
             id: productId,
             title: value['title'],
             price: value['price'],
             imageUrl: value['imageUrl'],
-            description: value['description']));
-      });
-      _products = loadedProducts;
+            description: value['description'],
+            isFavorite: value['isFavorite'],
+          ));
+        });
+        _products = loadedProducts;
+      }
       notifyListeners();
     });
   }
