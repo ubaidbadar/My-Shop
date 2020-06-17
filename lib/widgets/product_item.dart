@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../screens/product_details_screen.dart';
+import '../widgets/favorite_product.dart';
 import '../providers/products.dart';
 import '../providers/cart.dart';
 
@@ -10,8 +11,8 @@ class ProductItem extends StatelessWidget {
     final Product product = Provider.of<Product>(context, listen: false);
     final cart = Provider.of<Cart>(context, listen: false);
     final sf = Scaffold.of(context);
-    print(product.isFavorite);
-    void removeProductFromCart(){
+
+    void removeProductFromCart() {
       cart.removeSingleCartItem(product.id);
       sf.hideCurrentSnackBar();
       sf.showSnackBar(SnackBar(
@@ -39,7 +40,7 @@ class ProductItem extends StatelessWidget {
         ),
       ));
     }
-    
+
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
         context,
@@ -57,12 +58,9 @@ class ProductItem extends StatelessWidget {
             backgroundColor: Colors.black87,
             title: Text(product.title),
             leading: Consumer<Product>(
-              builder: (_, i, child) => IconButton(
-                icon: Icon(
-                  product.isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: Theme.of(context).accentColor,
-                ),
-                onPressed: product.toggleFavoriteStatus,
+              builder: (_, i, child) => FavoriteProduct(
+                favHanlder: product.toggleFavoriteStatus,
+                isFavorite: product.isFavorite,
               ),
             ),
             trailing: IconButton(

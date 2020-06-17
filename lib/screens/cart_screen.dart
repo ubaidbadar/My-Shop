@@ -9,7 +9,7 @@ class CartScreen extends StatelessWidget {
   static const routeName = '/cart';
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<ci.Cart>(context, listen: false);
+    final cart = Provider.of<ci.Cart>(context);
     final addOrder = Provider.of<Orders>(context, listen: false).addOrder;
     void addingOrder(){
       addOrder(cart.cart, cart.totalPrice);

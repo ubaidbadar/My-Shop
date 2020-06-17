@@ -102,19 +102,22 @@ class _ProductOverViewScreenState extends State<ProductOverViewScreen> {
           ? (_spinner
               ? Spinner()
               : (products.length > 0
-                  ? GridView.builder(
-                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 200,
-                        childAspectRatio: 16 / 15,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
+                  ? RefreshIndicator(
+                      onRefresh: _products.refreshProducts,
+                      child: GridView.builder(
+                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 200,
+                          childAspectRatio: 16 / 15,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                        itemBuilder: (_, i) => ChangeNotifierProvider.value(
+                          value: products[i],
+                          child: ProductItem(),
+                        ),
+                        itemCount: products.length,
+                        padding: const EdgeInsets.all(8),
                       ),
-                      itemBuilder: (_, i) => ChangeNotifierProvider.value(
-                        value: products[i],
-                        child: ProductItem(),
-                      ),
-                      itemCount: products.length,
-                      padding: const EdgeInsets.all(8),
                     )
                   : Center(
                       child: Text(
